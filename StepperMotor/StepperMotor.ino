@@ -28,14 +28,53 @@ DRV8825 stepper(MOTOR_STEPS, DIR, STEP, MODE0, MODE1, MODE2);
 int msSpeed = 8;
 int RPM = 3;
 
+// incoming serial byte
+int inByte = 0;
+
+//current rotation state
+int rState;
+
 void setup() {
+  //start serial with IDE
+  Serial.begin(9600);
+  
+  while (!Serial) {
+    ;// wait for serial port to connect. Needed for native USB port only
+  }
+  
+  establishContact();  // send a byte to establish contact until receiver responds
+  
   stepper.setRPM(RPM);
+  
+  rState = 0;
 }
 
 void loop() {
   
   stepper.setMicrostep(msSpeed);
   
-  stepper.move(800 * msSpeed);
+  rState = rState + 1;
+ 
 
+  
+  //Tell IDE the Rotation State
+  Serial.println(rState);
+  //if Serial is available, read the bytes then send the Rotation State
+  if (Serial.available() > 0) {
+    // get incoming byte:
+    inByte = Serial.read();
+    Serial.write(rState);
+  } 
+  
+   stepper.move(1 * msSpeed);
+  
 }
+
+
+void establishContact() {
+  while (Serial.available() <= 0) {
+    Serial.print('A');   // send a capital A
+    delay(300);
+  }
+}
+
